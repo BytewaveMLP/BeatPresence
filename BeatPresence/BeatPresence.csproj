@@ -43,8 +43,17 @@
     <Reference Include="BSML">
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\BSML.dll</HintPath>
     </Reference>
+    <Reference Include="BS_Utils">
+      <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\BS_Utils.dll</HintPath>
+    </Reference>
     <Reference Include="DiscordCore">
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\DiscordCore.dll</HintPath>
+    </Reference>
+    <Reference Include="GameplayCore">
+      <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
+    </Reference>
+    <Reference Include="SiraUtil">
+      <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\SiraUtil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

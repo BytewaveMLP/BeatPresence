@@ -1,16 +1,11 @@
-﻿using IPA;
-using IPA.Config;
-using IPA.Config.Stores;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using UnityEngine;
-using IPALogger = IPA.Logging.Logger;
 using DiscordCore;
+using IPA;
+using UnityEngine;
 using BSML = BeatSaberMarkupLanguage;
+using IPALogger = IPA.Logging.Logger;
+using UnityEngine.SceneManagement;
 
 namespace BeatPresence
 {
@@ -21,11 +16,34 @@ namespace BeatPresence
 		//       You must also add a reference to the Harmony assembly in the Libs folder.
 		// public const string HarmonyId = "com.github.YourGitHub.BeatPresence";
 		// internal static readonly HarmonyLib.Harmony harmony = new HarmonyLib.Harmony(HarmonyId);
-
+		
 		internal static Plugin Instance { get; private set; }
 		internal static IPALogger Log { get; private set; }
 		internal static BeatPresenceController PluginController { get { return BeatPresenceController.Instance; } }
 		internal static DiscordInstance Discord { get; private set; }
+
+		private AudioTimeSyncController timeSyncController;
+		private IPreviewBeatmapLevel levelData;
+		private GameplayCoreSceneSetupData gameplaySetupData;
+		private string oldState = "";
+
+		/// <summary>
+		/// Finds the first instance of a Unity object with type T, or throws if it couldn't be found.
+		/// </summary>
+		/// <typeparam name="T">The type of object to retrieve</typeparam>
+		/// <returns>The retrieved object</returns>
+		private static T FindFirstOrDefault<T>() where T : UnityEngine.Object
+		{
+			// yoinked from https://github.com/opl-/beatsaber-http-status/blob/a8be8e539d3b004289182dc28ad596704b004451/BeatSaberHTTPStatus/Plugin.cs#L285
+			T obj = Resources.FindObjectsOfTypeAll<T>().FirstOrDefault();
+			if (obj == null)
+			{
+				Plugin.Log.Error("Couldn't find " + typeof(T).FullName);
+				throw new InvalidOperationException("Couldn't find " + typeof(T).FullName);
+			}
+			return obj;
+		}
+
 		public static DiscordSettings DiscordPresenceSettings = new DiscordSettings()
 		{
 			modId = "BeatPresence",
@@ -34,6 +52,18 @@ namespace BeatPresence
 			appId = 736414005190721566,
 
 			handleInvites = false,
+		};
+
+		internal Discord.Activity currentActivity = new Discord.Activity()
+		{
+			Name = "Beat Saber",
+			ApplicationId = DiscordPresenceSettings.appId,
+
+			Assets = new Discord.ActivityAssets()
+			{
+				LargeImage = "beatsaber",
+				LargeText = "Using BeatPresence by Bytewave",
+			}
 		};
 
 		[Init]
@@ -49,6 +79,82 @@ namespace BeatPresence
 			Plugin.Log?.Info("Becoming mindful.");
 
 			DiscordPresenceSettings.modIcon = BSML.Utilities.FindSpriteInAssembly("BeatPresence.Assets.BeatSaberLogo.png");
+		}
+
+		internal void OnMenuSceneLoaded()
+		{
+			Plugin.Log?.Info("Main menu loaded!");
+
+			BS_Utils.Gameplay.Gamemode.Init();
+		}
+
+		internal void OnMenuSceneActive()
+		{
+			Plugin.Log?.Info("Main menu active!");
+
+			timeSyncController = null;
+			
+			currentActivity.Details = "Main Menu";
+			currentActivity.State = "Selecting a song...";
+			currentActivity.Timestamps.End = 0;
+
+			Discord.UpdateActivity(currentActivity);
+		}
+
+		internal void UpdateSongEndTime()
+		{
+			float songSpeedMul = gameplaySetupData.gameplayModifiers.songSpeedMul;
+			if (gameplaySetupData.practiceSettings != null)
+				songSpeedMul = gameplaySetupData.practiceSettings.songSpeedMul;
+			float elapsedTime = timeSyncController.songTime / songSpeedMul;
+			float remainingTime = levelData.songDuration / songSpeedMul - elapsedTime;
+			long now = DateTimeOffset.Now.ToUnixTimeSeconds();
+			long endTime = now + (long) remainingTime;
+			
+			Plugin.Log?.Info("Updating timestamps:\n" +
+			                 $"\tsongSpeedMul  = {songSpeedMul}\n" +
+			                 $"\telapsedTime   = {elapsedTime}\n" +
+			                 $"\tremainingTime = {remainingTime}\n" +
+			                 $"\tnow           = {now}\n" +
+			                 $"\tendTime       = {endTime}\n");
+			
+			currentActivity.Timestamps.End = endTime;
+		}
+
+		internal void OnGameSceneActive()
+		{
+			Plugin.Log?.Info("Song started!");
+
+			gameplaySetupData = BS_Utils.Plugin.LevelData.GameplayCoreSceneSetupData;
+
+			timeSyncController = FindFirstOrDefault<AudioTimeSyncController>();
+
+			BS_Utils.Gameplay.LevelData level = BS_Utils.Plugin.LevelData;
+			levelData = level.GameplayCoreSceneSetupData.difficultyBeatmap.level;
+			currentActivity.Details = levelData.songAuthorName + " - " + levelData.songName;
+			currentActivity.State = level.Mode.ToString();
+			if (BS_Utils.Gameplay.Gamemode.IsPartyActive) currentActivity.State = "Party!";
+			UpdateSongEndTime();
+			Discord.UpdateActivity(currentActivity);
+		}
+
+		internal void OnSongPaused()
+		{
+			Plugin.Log?.Info("Song paused.");
+
+			oldState = currentActivity.State;
+			currentActivity.State = oldState + " [PAUSED]";
+			currentActivity.Timestamps.End = 0;
+			Discord.UpdateActivity(currentActivity);
+		}
+
+		internal void OnSongUnpaused()
+		{
+			Plugin.Log?.Info("Song resumed.");
+
+			currentActivity.State = oldState;
+			UpdateSongEndTime();
+			Discord.UpdateActivity(currentActivity);
 		}
 
 		#region BSIPA Config
@@ -75,20 +181,22 @@ namespace BeatPresence
 			//new GameObject("BeatPresenceController").AddComponent<BeatPresenceController>();
 			Plugin.Log?.Info("I'm aliiiiiive!");
 			Discord = DiscordManager.instance.CreateInstance(DiscordPresenceSettings);
-			Discord.UpdateActivity(new Discord.Activity()
+			BS_Utils.Utilities.BSEvents.menuSceneLoaded += OnMenuSceneLoaded;
+			BS_Utils.Utilities.BSEvents.menuSceneActive += OnMenuSceneActive;
+			BS_Utils.Utilities.BSEvents.gameSceneActive += OnGameSceneActive;
+			BS_Utils.Utilities.BSEvents.songPaused += OnSongPaused;
+			BS_Utils.Utilities.BSEvents.songUnpaused += OnSongUnpaused;
+			SceneManager.activeSceneChanged += (oldScene, newScene) =>
 			{
-				ApplicationId = DiscordPresenceSettings.appId,
-				Name = "Beat Saber",
-				State = "In the main menu",
-				Assets = new Discord.ActivityAssets()
-				{
-					LargeImage = "beatsaber",
-					LargeText = "Using BeatPresence by Bytewave",
-				}
-			});
+				Plugin.Log?.Info($"Scene transition: {oldScene.name} -> {newScene.name}");
+			};
+			SceneManager.sceneLoaded += (scene, mode) =>
+			{
+				Plugin.Log?.Info($"Scene loaded: {scene.name} w/ mode {mode}");
+			};
 			//ApplyHarmonyPatches();
 		}
-
+		
 		/// <summary>
 		/// Called when the plugin is disabled and on Beat Saber quit. It is important to clean up any Harmony patches, GameObjects, and Monobehaviours here.
 		/// The game should be left in a state as if the plugin was never started.
@@ -100,6 +208,11 @@ namespace BeatPresence
 			if (PluginController != null)
 				GameObject.Destroy(PluginController);
 			Discord?.DestroyInstance();
+			BS_Utils.Utilities.BSEvents.menuSceneActive -= OnMenuSceneActive;
+			BS_Utils.Utilities.BSEvents.gameSceneActive -= OnGameSceneActive;
+			BS_Utils.Utilities.BSEvents.gameSceneActive -= OnGameSceneActive;
+			BS_Utils.Utilities.BSEvents.songPaused -= OnSongPaused;
+			BS_Utils.Utilities.BSEvents.songUnpaused -= OnSongUnpaused;
 			//RemoveHarmonyPatches();
 			Plugin.Log?.Info("See ya' around!");
 		}

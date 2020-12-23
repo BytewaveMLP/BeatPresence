@@ -1,15 +1,20 @@
 ﻿{
   "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
   "id": "BeatPresence",
-  "name": "BeatPresence",
+  "name": "Beat Presence",
   "author": "BytewaveMLP",
   "version": "0.0.1",
-  "description": "",
+  "description": "Discord Rich Presence for Beat Saber, because all the other solutions suck",
   "gameVersion": "1.11.1",
   "dependsOn": {
     "BSIPA": "^4.0.5",
     "DiscordCore": "^1.0.3",
-    "BeatSaberMarkupLanguage":  "^1.4.2" 
+    "BeatSaberMarkupLanguage": "^1.4.2",
+    "SiraUtil": "^2.3.0",
+    "BS Utils":  "^1.6.5" 
   },
-  "features": []
+  "features": {},
+  "misc": {
+      "plugin-hint": "BeatPresence.Plugin"
+  }
 }
