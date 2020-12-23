@@ -83,14 +83,14 @@ namespace BeatPresence
 
 		internal void OnMenuSceneLoaded()
 		{
-			Plugin.Log?.Info("Main menu loaded!");
+			Plugin.Log?.Debug("Main menu loaded!");
 
 			BS_Utils.Gameplay.Gamemode.Init();
 		}
 
 		internal void OnMenuSceneActive()
 		{
-			Plugin.Log?.Info("Main menu active!");
+			Plugin.Log?.Debug("Main menu active!");
 
 			timeSyncController = null;
 			
@@ -111,7 +111,7 @@ namespace BeatPresence
 			long now = DateTimeOffset.Now.ToUnixTimeSeconds();
 			long endTime = now + (long) remainingTime;
 			
-			Plugin.Log?.Info("Updating timestamps:\n" +
+			Plugin.Log?.Debug("Updating timestamps:\n" +
 			                 $"\tsongSpeedMul  = {songSpeedMul}\n" +
 			                 $"\telapsedTime   = {elapsedTime}\n" +
 			                 $"\tremainingTime = {remainingTime}\n" +
@@ -123,7 +123,7 @@ namespace BeatPresence
 
 		internal void OnGameSceneActive()
 		{
-			Plugin.Log?.Info("Song started!");
+			Plugin.Log?.Debug("Song started!");
 
 			gameplaySetupData = BS_Utils.Plugin.LevelData.GameplayCoreSceneSetupData;
 
@@ -140,7 +140,7 @@ namespace BeatPresence
 
 		internal void OnSongPaused()
 		{
-			Plugin.Log?.Info("Song paused.");
+			Plugin.Log?.Debug("Song paused.");
 
 			oldState = currentActivity.State;
 			currentActivity.State = oldState + " [PAUSED]";
@@ -150,7 +150,7 @@ namespace BeatPresence
 
 		internal void OnSongUnpaused()
 		{
-			Plugin.Log?.Info("Song resumed.");
+			Plugin.Log?.Debug("Song resumed.");
 
 			currentActivity.State = oldState;
 			UpdateSongEndTime();
@@ -188,11 +188,11 @@ namespace BeatPresence
 			BS_Utils.Utilities.BSEvents.songUnpaused += OnSongUnpaused;
 			SceneManager.activeSceneChanged += (oldScene, newScene) =>
 			{
-				Plugin.Log?.Info($"Scene transition: {oldScene.name} -> {newScene.name}");
+				Plugin.Log?.Debug($"Scene transition: {oldScene.name} -> {newScene.name}");
 			};
 			SceneManager.sceneLoaded += (scene, mode) =>
 			{
-				Plugin.Log?.Info($"Scene loaded: {scene.name} w/ mode {mode}");
+				Plugin.Log?.Debug($"Scene loaded: {scene.name} w/ mode {mode}");
 			};
 			//ApplyHarmonyPatches();
 		}
