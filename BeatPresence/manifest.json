@@ -1,7 +1,7 @@
 ﻿{
   "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
   "id": "BeatPresence",
-  "name": "Beat Presence",
+  "name": "BeatPresence",
   "author": "BytewaveMLP",
   "version": "0.0.1",
   "description": "Discord Rich Presence for Beat Saber, because all the other solutions suck",
