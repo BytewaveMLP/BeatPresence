@@ -39,7 +39,13 @@
     <DisableCopyToPlugins>True</DisableCopyToPlugins>
     <DisableZipRelease>True</DisableZipRelease>
   </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BeatmapCore">
+      <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\BeatmapCore.dll</HintPath>
+    </Reference>
     <Reference Include="BSML">
       <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
     </Reference>
