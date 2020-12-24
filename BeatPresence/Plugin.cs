@@ -132,7 +132,13 @@ namespace BeatPresence
 			BS_Utils.Gameplay.LevelData level = BS_Utils.Plugin.LevelData;
 			levelData = level.GameplayCoreSceneSetupData.difficultyBeatmap.level;
 			currentActivity.Details = levelData.songAuthorName + " - " + levelData.songName;
-			currentActivity.State = level.Mode.ToString();
+			string levelDifficulty = gameplaySetupData.difficultyBeatmap.difficulty.ToString();
+			levelDifficulty = levelDifficulty switch
+			{
+				"ExpertPlus" => "Expert+",
+				_            => levelDifficulty,
+			};
+			currentActivity.State = level.Mode.ToString() + " | " + levelDifficulty;
 			if (BS_Utils.Gameplay.Gamemode.IsPartyActive) currentActivity.State = "Party!";
 			UpdateSongEndTime();
 			Discord.UpdateActivity(currentActivity);
