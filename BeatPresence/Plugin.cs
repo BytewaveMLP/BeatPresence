@@ -20,7 +20,6 @@ namespace BeatPresence
 		
 		internal static Plugin Instance { get; private set; }
 		internal static IPALogger Log { get; private set; }
-		internal static BeatPresenceController PluginController { get { return BeatPresenceController.Instance; } }
 		internal static DiscordInstance Discord { get; private set; }
 
 		private AudioTimeSyncController timeSyncController;
@@ -284,7 +283,6 @@ namespace BeatPresence
 		[OnEnable]
 		public void OnEnable()
 		{
-			//new GameObject("BeatPresenceController").AddComponent<BeatPresenceController>();
 			Plugin.Log?.Info("I'm aliiiiiive!");
 			Discord = DiscordManager.instance.CreateInstance(DiscordPresenceSettings);
 			BS_Utils.Utilities.BSEvents.menuSceneLoaded += OnMenuSceneLoaded;
@@ -303,8 +301,6 @@ namespace BeatPresence
 		[OnDisable]
 		public void OnDisable()
 		{
-			if (PluginController != null)
-				GameObject.Destroy(PluginController);
 			Discord?.DestroyInstance();
 			BS_Utils.Utilities.BSEvents.menuSceneActive -= OnMenuSceneActive;
 			BS_Utils.Utilities.BSEvents.gameSceneActive -= OnGameSceneActive;
