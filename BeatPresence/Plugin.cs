@@ -125,21 +125,51 @@ namespace BeatPresence
 		{
 			Plugin.Log?.Debug("Song started!");
 
-			gameplaySetupData = BS_Utils.Plugin.LevelData.GameplayCoreSceneSetupData;
-
 			timeSyncController = FindFirstOrDefault<AudioTimeSyncController>();
 
 			BS_Utils.Gameplay.LevelData level = BS_Utils.Plugin.LevelData;
+			gameplaySetupData = BS_Utils.Plugin.LevelData.GameplayCoreSceneSetupData;
 			levelData = level.GameplayCoreSceneSetupData.difficultyBeatmap.level;
+			BeatmapCharacteristicSO beatmapCharacteristics = gameplaySetupData.difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic;
+
 			currentActivity.Details = levelData.songAuthorName + " - " + levelData.songName;
+
 			string levelDifficulty = gameplaySetupData.difficultyBeatmap.difficulty.ToString();
 			levelDifficulty = levelDifficulty switch
 			{
 				"ExpertPlus" => "Expert+",
-				_            => levelDifficulty,
+				_ => levelDifficulty,
 			};
-			currentActivity.State = level.Mode.ToString() + " | " + levelDifficulty;
-			if (BS_Utils.Gameplay.Gamemode.IsPartyActive) currentActivity.State = "Party!";
+			currentActivity.State = levelDifficulty;
+
+			string mapType = "";
+			if (beatmapCharacteristics.numberOfColors == 1)
+			{
+				mapType = "One Saber";
+			}
+			else if (beatmapCharacteristics.containsRotationEvents)
+			{
+				if (beatmapCharacteristics.requires360Movement)
+				{
+					mapType = "360";
+				}
+				else
+				{
+					mapType = "90";
+				}
+			}
+			if (mapType != "")
+			{
+				currentActivity.State += $" | {mapType}";
+			}
+
+			string gamemode = level.Mode.ToString();
+			if (BS_Utils.Gameplay.Gamemode.IsPartyActive)
+			{
+				gamemode = "Party!";
+			}
+			currentActivity.State += $" | {gamemode}";
+
 			UpdateSongEndTime();
 			Discord.UpdateActivity(currentActivity);
 		}
@@ -149,7 +179,7 @@ namespace BeatPresence
 			Plugin.Log?.Debug("Song paused.");
 
 			oldState = currentActivity.State;
-			currentActivity.State = oldState + " [PAUSED]";
+			currentActivity.State = $"[PAUSED] {oldState}";
 			currentActivity.Timestamps.End = 0;
 			Discord.UpdateActivity(currentActivity);
 		}
