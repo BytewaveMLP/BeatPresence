@@ -6,6 +6,7 @@ using UnityEngine;
 using BSML = BeatSaberMarkupLanguage;
 using IPALogger = IPA.Logging.Logger;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 namespace BeatPresence
 {
@@ -98,6 +99,9 @@ namespace BeatPresence
 			currentActivity.State = "Selecting a song...";
 			currentActivity.Timestamps.End = 0;
 
+			currentActivity.Assets.SmallImage = "";
+			currentActivity.Assets.SmallText = "";
+
 			Discord.UpdateActivity(currentActivity);
 		}
 
@@ -119,6 +123,64 @@ namespace BeatPresence
 			                 $"\tendTime       = {endTime}\n");
 			
 			currentActivity.Timestamps.End = endTime;
+		}
+
+		internal List<string> DecodeActiveModifiers()
+		{
+			var activeModifers = new List<string>();
+			GameplayModifiers mods = gameplaySetupData.gameplayModifiers;
+
+			if (mods.noFail || mods.demoNoFail)
+			{
+				activeModifers.Add("No Fail");
+			}
+
+			if (mods.noBombs)
+			{
+				activeModifers.Add("No Bombs");
+			}
+
+			if (mods.demoNoObstacles)
+			{
+				activeModifers.Add("No Obstacles");
+			}
+
+			if (mods.noArrows)
+			{
+				activeModifers.Add("No Arrows");
+			}
+
+			if (mods.songSpeed == GameplayModifiers.SongSpeed.Slower)
+			{
+				activeModifers.Add("Slower Song");
+			}
+
+			if (mods.instaFail)
+			{
+				activeModifers.Add("Insta Fail");
+			}
+
+			if (mods.energyType == GameplayModifiers.EnergyType.Battery)
+			{
+				activeModifers.Add("Battery Energy");
+			}
+
+			if (mods.ghostNotes)
+			{
+				activeModifers.Add("Ghost Notes");
+			}
+
+			if (mods.disappearingArrows)
+			{
+				activeModifers.Add("Disappearing Arrows");
+			}
+
+			if (mods.songSpeed == GameplayModifiers.SongSpeed.Faster)
+			{
+				activeModifers.Add("Faster Song");
+			}
+
+			return activeModifers;
 		}
 
 		internal void OnGameSceneActive()
@@ -169,6 +231,14 @@ namespace BeatPresence
 				gamemode = "Party!";
 			}
 			currentActivity.State += $" | {gamemode}";
+
+			var activeMods = DecodeActiveModifiers();
+			Plugin.Log?.Debug($"Active modifiers: {string.Join(", ", activeMods)}");
+			if (activeMods.Any())
+			{
+				currentActivity.Assets.SmallImage = "plus";
+				currentActivity.Assets.SmallText = $"Modifiers: {string.Join(", ", activeMods)}";
+			}
 
 			UpdateSongEndTime();
 			Discord.UpdateActivity(currentActivity);
