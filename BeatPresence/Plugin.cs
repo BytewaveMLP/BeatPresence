@@ -192,14 +192,6 @@ namespace BeatPresence
 			BS_Utils.Utilities.BSEvents.gameSceneActive += OnGameSceneActive;
 			BS_Utils.Utilities.BSEvents.songPaused += OnSongPaused;
 			BS_Utils.Utilities.BSEvents.songUnpaused += OnSongUnpaused;
-			SceneManager.activeSceneChanged += (oldScene, newScene) =>
-			{
-				Plugin.Log?.Debug($"Scene transition: {oldScene.name} -> {newScene.name}");
-			};
-			SceneManager.sceneLoaded += (scene, mode) =>
-			{
-				Plugin.Log?.Debug($"Scene loaded: {scene.name} w/ mode {mode}");
-			};
 			//ApplyHarmonyPatches();
 		}
 		
