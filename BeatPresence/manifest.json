@@ -3,7 +3,7 @@
   "id": "BeatPresence",
   "name": "BeatPresence",
   "author": "BytewaveMLP",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Discord Rich Presence for Beat Saber, because all the other solutions suck",
   "gameVersion": "1.11.1",
   "dependsOn": {
