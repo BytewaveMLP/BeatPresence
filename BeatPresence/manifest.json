@@ -12,6 +12,9 @@
     "BeatSaberMarkupLanguage": "^1.4.2",
     "BS Utils":  "^1.6.5" 
   },
+  "links": {
+    "project-home": "https://github.com/BytewaveMLP/BeatPresence"
+  },
   "features": {},
   "misc": {
       "plugin-hint": "BeatPresence.Plugin"
